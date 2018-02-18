@@ -24,7 +24,7 @@ $(PREBUILD_DIRS):
 	mkdir -p $@
 
 lib/libdmf.a:
-	CC=$(CC) AR=$(AR) $(MAKE) -e -C libdmf/ all docs
+	$(MAKE) TARGET="out/libdmf.a" CC=$(CC) AR=$(AR) -C libdmf/ all docs
 	cp libdmf/out/libdmf.a lib/
 
 $(OBJECTS): $(SRC_C) lib/libdmf.a | $(PREBUILD_DIRS)
@@ -40,5 +40,6 @@ clean:
 	-rm -f out/*.o
 	-rm -f out/src/*.o
 	-rm -f $(TARGET)
+	-rm -f $(TARGET).exe
 	-rm -f lib/*.a
 	make -C libdmf/ clean

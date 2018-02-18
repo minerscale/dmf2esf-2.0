@@ -1,0 +1,34 @@
+{
+    "folders":
+    [
+        {
+            "path": "./",
+            "file_exclude_patterns": [".gitignore", ".gitmodules", "dmf2esf-2.0.sublime-project"],
+            "folder_exclude_patterns": ["libdmf", "lib"],
+        }
+    ],
+    "build_systems":
+    [
+        {
+            "name": "Build",
+            "shell_cmd": "make",
+            "file_regex": "^(..[^:\n]*):([0-9]+):?([0-9]+)?:? (.*)$",
+            "working_dir": "${folder:${project_path:${file_path}}}",
+            "selector": "source.makefile",
+            "syntax": "Packages/Makefile/Make Output.sublime-syntax",
+            "keyfiles": ["Makefile", "makefile"],
+                
+            "variants":
+            [
+                {
+                    "name": "Windows",
+                    "shell_cmd": "make TARGET=out/dmf2esf.exe CC=x86_64-w64-mingw32-gcc AR=x86_64-w64-mingw32-ar",
+                },
+                {
+                    "name": "Clean",
+                    "shell_cmd": "make clean"
+                },
+            ]
+        }
+    ],
+}

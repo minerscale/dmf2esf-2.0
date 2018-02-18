@@ -32,3 +32,5 @@
 *.dSYM/
 
 out/
+
+*.sublime-workspace
