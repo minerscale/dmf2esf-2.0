@@ -1,0 +1,3 @@
+[submodule "libdmf"]
+	path = libdmf
+	url = https://github.com/minerscale/dmf-parser
