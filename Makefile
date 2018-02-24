@@ -2,7 +2,7 @@ TARGET = out/dmf2esf
 CC = gcc
 AR = ar
 MAKE = make
-CFLAGS = -Wall -Iinc -flto -O3 -L./lib -ldmf
+CFLAGS = -Wall -Iinc -flto -g -L./lib -ldmf
 CHMOD = chmod
 
 PREBUILD_DIRS = lib/ out/ out/src
@@ -20,6 +20,7 @@ SRC_C += $(wildcard src/*.c)
 
 OBJECTS = $(addprefix out/, $(SRC_C:.c=.o))
 
+
 $(PREBUILD_DIRS):
 	mkdir -p $@
 
@@ -27,7 +28,7 @@ lib/libdmf.a:
 	$(MAKE) TARGET="out/libdmf.a" CC=$(CC) AR=$(AR) -C libdmf/ all docs
 	cp libdmf/out/libdmf.a lib/
 
-$(OBJECTS): $(SRC_C) lib/libdmf.a | $(PREBUILD_DIRS)
+out/%.o: %.c lib/libdmf.a $(HEADERS) | $(PREBUILD_DIRS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .PRECIOUS: $(TARGET) $(OBJECTS)
