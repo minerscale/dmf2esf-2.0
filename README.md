@@ -1,4 +1,4 @@
-### dmf2esf-2.0
+# dmf2esf-2.0
 
 A converter that converts dmf files into the Echo Sound Format (esf)
 
