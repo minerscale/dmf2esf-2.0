@@ -300,4 +300,10 @@ int verifyDMF(char *filename);
     \param filename The path to open, verify and close.
 */
 
+int freeDMF(dmf *src);
+/*! \fn int freeDMF(dmf *src);
+    \brief Free a DMF's resources.
+    \param src Source DMF.
+*/
+
 #endif // _DMF_PARSER_H_

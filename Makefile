@@ -20,7 +20,6 @@ SRC_C += $(wildcard src/*.c)
 
 OBJECTS = $(addprefix out/, $(SRC_C:.c=.o))
 
-
 $(PREBUILD_DIRS):
 	mkdir -p $@
 

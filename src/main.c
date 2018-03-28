@@ -13,7 +13,7 @@ int main(int argc, char **argv){
 
     char *outputFile = NULL;
     char *inputFile = NULL;
-    while ((c = getopt (argc, argv, "hvo:")) != -1){
+    while ((c = getopt (argc, argv, "hvdo:")) != -1){
         switch (c){
             case 'h':
                 printf ("Usage: dmf2esf [options] file\nOptions:\n    -o <file>               Specify output file. Default none.\n");
@@ -21,6 +21,9 @@ int main(int argc, char **argv){
             case 'v':
                 printf ("dmf2esf 2.0.0\n");
                 return 0;
+            case 'd':
+                debug = 1;
+                break;
             case 'o':
                 outputFile = malloc(strlen(optarg) + 1);
                 memcpy(outputFile, optarg, (size_t)strlen(optarg) + 1);
@@ -42,7 +45,7 @@ int main(int argc, char **argv){
         return 1;
     }
 
-    if (outputFile && access(dirname(outputFile), W_OK) != 0){
+    if (outputFile && access(dirname(strdup(outputFile)), W_OK) != 0){
         fprintf (stderr, "dmf2esf: error: %s: Permission denied\n", outputFile);
         return 1;
     }
@@ -60,12 +63,42 @@ int main(int argc, char **argv){
         exit(1);
     }
 
-    void *esf = NULL;
-    size_t esf_length = convertESF(song, &esf);
+    // TO DEBUG
+    unsigned char *esf = NULL;
+    unsigned char **instruments = NULL;
+    size_t esf_length = convertESF(song, &esf, &instruments);
     
     if(outputFile){
         FILE *fp = fopen(outputFile, "wb");
-
         fwrite(esf, 1, esf_length, fp);
+        fclose(fp);
+
+        char *fileStr = calloc(100, 1);
+        for (int i = strlen(outputFile); i > 0; --i){
+            if (outputFile[i] == 46) memcpy (fileStr, outputFile, i);
+        }
+
+        char *filename = calloc(100, 1);
+        for (int i = 0; i < song.total_instruments; ++i){
+
+            if (song.instruments[i].mode == MODE_FM){
+                sprintf(filename, "%s_inst-%02x.eif", fileStr, i);
+                FILE *instFile = fopen(filename, "wb");
+                fwrite(instruments[i], 1, 29, instFile);
+            }else{
+                sprintf(filename, "%s_inst-%02x.eef", fileStr, i);
+                FILE *instFile = fopen(filename, "wb");
+                int j = 0;
+                for (j = 0; instruments[i][j] != 0xFF; ++j){
+                    fwrite(&instruments[i][j], 1, 1, instFile);
+                }
+                fwrite(&instruments[i][j], 1, 1, instFile);
+            }
+        }
     }
+
+    // Free before exit
+    freeDMF(&song);
+
+    return 0;
 }
