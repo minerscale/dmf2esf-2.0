@@ -13,8 +13,15 @@ int current_instrument[10] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
 // Time since last note in ticks 50/60hz
 int time_since_last_event = 0;
 
+int delay_amount = 0;
+
+int delay_flag = 0;
+
 // Is the current tick even?
 int tick_even = 1;
+
+int tick_time_1 = 0;
+int tick_time_2 = 0;
 
 u8 *addDelay(u8 *esfPointer, int amount){
     while (1){
@@ -64,12 +71,24 @@ u8 *parseRow(u8 *esfPointer, dmf song, int i, int j, int k){
         int value = song.channels[k].rows[i][j].commands[l].value;
 
         switch(command){
+            // Set noise mode
             case 0x20:
                 noiseMode = value;
                 break;
-            case 0xED:
-                // TODO
+            // Set tempo 1
+            case 0x09:
+                if (value != 0 && value <= 20){
+
+                    tick_time_1 = value;
+                }
                 break;
+            // Set tempo 2
+            case 0x0F:
+                if (value != 0 && value <= 20){
+                    tick_time_2 = value;
+                }
+                break;
+            
         }
     }
 
@@ -163,6 +182,7 @@ size_t convertESF(dmf song, unsigned char **ret_esf, unsigned char ***instrument
     /*****************************************************************************\
     | Write Instruments                                                           |
     \*****************************************************************************/
+    
     *instruments = malloc(song.total_instruments * sizeof(unsigned char *));
 
     for (int i = 0; i < song.total_instruments; ++i){
@@ -228,14 +248,37 @@ size_t convertESF(dmf song, unsigned char **ret_esf, unsigned char ***instrument
     | Write ESF                                                                   |
     \*****************************************************************************/
 
+    tick_time_1 = song.tick_time_1;
+    tick_time_2 = song.tick_time_2;
+
     u8 *esf = malloc(16777216); // esf to write
     u8 *esfPointer = esf;
     for (int i = 0; i < song.total_rows_in_pattern_matrix; ++i){
         for (int j = 0; j < song.total_rows_per_pattern; ++j){
-            for (int k = 0; k < song.system_total_channels; ++k){
-                esfPointer = parseRow(esfPointer, song, i, j, k);
+
+            for (int l = 0; l < (tick_even ? tick_time_1 : tick_time_2) * (song.time_base + 1); ++l){
+                for (int k = 0; k < song.system_total_channels; ++k){
+                    // Is there a delay command?
+                    int is_delay = 0;
+                    int delay_value = 0;
+                    for(int m = 0; m < song.channels[k].effect_columns_count; ++m){
+                        is_delay = song.channels[k].rows[i][j].commands[m].code == 0xED;
+                        delay_value = song.channels[k].rows[i][j].commands[m].value;
+                    }
+                    
+                    if (is_delay){
+                        // If there is a delay do it in order of earliest to latest.
+                        if (delay_value == l){
+                            esfPointer = parseRow(esfPointer, song, i, j, k);
+                        }
+                    // If not, play command on the beat
+                    }else if (l == 0){
+                        esfPointer = parseRow(esfPointer, song, i, j, k);
+                    }
+                }
+                time_since_last_event += 1;
             }
-            time_since_last_event += (tick_even ? song.tick_time_1 : song.tick_time_2) * (song.time_base + 1);
+            
             tick_even = !tick_even;
         }
     }
